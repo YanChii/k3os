@@ -166,6 +166,7 @@ apply_smartos_mdata()
 {
     local mdget=/usr/sbin/mdata-get
     local yq=/usr/sbin/yq
+	local cfgfile=/var/lib/rancher/k3os/config.yaml
 
     if [ ! -x "${mdget}" ] || [ ! -x "${yq}" ]; then
         echo "SmartOS mdata tools are not present!"
@@ -177,26 +178,17 @@ apply_smartos_mdata()
         # no config in mdata
         return 0
     fi
+
     # convert json to yaml
     if ! K3CONf_YAML="$(echo "${K3CONF_JSON}" | ${yq} r -)"; then
         echo "Error converting config from SmartOS mdata."
         return 0
     fi
 
-    # the config data is ok, write the config
-    if grep /k3os/system /etc/mtab | grep -Eq '[ ,]ro[ ,]'; then
-        sys_ro=1
-        mount -wo remount /k3os/system
+    if [ -f "${cfgfile}" ]; then
+        mv -f "${cfgfile}" "${cfgfile}.old"
     fi
-    if [ -f /k3os/system/config.yaml ]; then
-        mv -f /k3os/system/config.yaml /k3os/system/config.yaml.old
-    fi
-    echo "${K3CONf_YAML}" > /k3os/system/config.yaml
-    if [ "${sys_ro}" -eq 1 ]; then
-        # return fs to previous state
-        mount -ro remount /k3os/system
-    fi
-	
+    echo "${K3CONf_YAML}" > "${cfgfile}"
 }
 
 setup_mounts

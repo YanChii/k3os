@@ -36,7 +36,9 @@ RUN apk -U add \
     tar \
     util-linux \
     vim \
-    xz
+    xz \
+    tcpdump \
+    qemu-guest-agent
 RUN if [ "$ARCH" == "amd64" ]; then \
         apk add open-vm-tools grub-bios \
     ;fi
@@ -45,3 +47,8 @@ RUN cp /etc/apk/repositories /etc/apk/repositories.orig && \
     apk -U add efibootmgr && \
     mv /etc/apk/repositories.orig /etc/apk/repositories && \
     apk update
+RUN curl -o /usr/sbin/mdata-get https://raw.githubusercontent.com/joyent/smartos-vmtools/master/src/linux/lib/smartdc/mdata-get && \
+    curl -o /usr/sbin/mdata-put https://raw.githubusercontent.com/joyent/smartos-vmtools/master/src/linux/lib/smartdc/mdata-put && \
+    curl -o /usr/sbin/mdata-list https://raw.githubusercontent.com/joyent/smartos-vmtools/master/src/linux/lib/smartdc/mdata-list && \
+    wget -qO /usr/sbin/yq https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64 && \
+    chmod +x /usr/sbin/mdata-get /usr/sbin/mdata-put /usr/sbin/mdata-list /usr/sbin/yq

@@ -162,6 +162,43 @@ grow_live()
     fi
 }
 
+apply_smartos_mdata()
+{
+    local mdget=/usr/sbin/mdata-get
+    local yq=/usr/sbin/yq
+
+    if [ ! -x "${mdget}" ] || [ ! -x "${yq}" ]; then
+        echo "SmartOS mdata tools are not present!"
+        return 0
+    fi
+
+    K3CONF_JSON="$(${mdget} k3os.config)"
+    if [ -z "${K3CONF_JSON}" ]; then
+        # no config in mdata
+        return 0
+    fi
+    # convert json to yaml
+    if ! K3CONf_YAML="$(echo "${K3CONF_JSON}" | ${yq} r -)"; then
+        echo "Error converting config from SmartOS mdata."
+        return 0
+    fi
+
+    # the config data is ok, write the config
+    if grep /k3os/system /etc/mtab | grep -Eq '[ ,]ro[ ,]'; then
+        sys_ro=1
+        mount -wo remount /k3os/system
+    fi
+    if [ -f /k3os/system/config.yaml ]; then
+        mv -f /k3os/system/config.yaml /k3os/system/config.yaml.old
+    fi
+    echo "${K3CONf_YAML}" > /k3os/system/config.yaml
+    if [ "${sys_ro}" -eq 1 ]; then
+        # return fs to previous state
+        mount -ro remount /k3os/system
+    fi
+	
+}
+
 setup_mounts
 grow_live
 setup_hostname
@@ -171,6 +208,7 @@ setup_root
 setup_inittab
 setup_sudoers
 setup_services
+apply_smartos_mdata
 ccapply --boot
 setup_cloudconfig
 cleanup

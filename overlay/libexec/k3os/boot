@@ -195,6 +195,19 @@ apply_smartos_mdata()
     echo "${K3CONf_YAML}" > "${cfgfile}"
 }
 
+setup_qemu_ga()
+{
+	local qga_dev=/dev/vport2p1
+
+    if  [ -e /etc/init.d/qemu-guest-agent ] &&
+		[ -e "${qga_dev}" ]; then
+        ln -s /etc/init.d/qemu-guest-agent /etc/runlevels/boot/
+		echo "GA_PATH=${qga_dev}" >> /etc/conf.d/qemu-guest-agent
+    fi
+
+}
+
+
 setup_mounts
 grow_live
 setup_hostname
@@ -207,4 +220,5 @@ setup_services
 apply_smartos_mdata
 ccapply --boot
 setup_cloudconfig
+setup_qemu_ga
 cleanup

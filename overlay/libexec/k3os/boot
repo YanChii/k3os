@@ -173,8 +173,12 @@ apply_smartos_mdata()
         return 0
     fi
 
-    K3CONF_JSON="$(${mdget} k3os.config)"
-    if [ -z "${K3CONF_JSON}" ]; then
+    if ! K3CONF_JSON="$(${mdget} k3os.config)"; then
+		# mdata fetch failed
+		return 0
+    elif [ -z "${K3CONF_JSON}" ] ||
+		 [[ "${K3CONF_JSON}" =~ "No metadata for k3os.config" ]];
+		then
         # no config in mdata
         return 0
     fi
